@@ -2,7 +2,7 @@
 
 import { Smartphone } from "lucide-react";
 import { Button } from "./ui/button";
-import { toast } from "./ui/sonner";
+import { toast } from "sonner";
 
 interface PhoneItemProps {
   phone: string;
