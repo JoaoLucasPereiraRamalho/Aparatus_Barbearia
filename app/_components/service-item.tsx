@@ -183,7 +183,8 @@ export function ServiceItem({ service }: ServiceItemProps) {
                   <Button
                     key={time}
                     variant={selectedTime === time ? "default" : "outline"}
-                    className="shrink-0 rounded-full px-4 py-2"
+                    // Adicionado 'flex items-center justify-center' para garantir que o texto esteja perfeitamente centralizado e não cause overflow sutil.
+                    className="shrink-0 rounded-full px-4 py-2 flex items-center justify-center"
                     onClick={() => setSelectedTime(time)}
                   >
                     {time}
