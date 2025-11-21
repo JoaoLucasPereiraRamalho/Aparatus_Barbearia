@@ -4,7 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import z from "zod";
 import { prisma } from "@/lib/prisma";
 import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
-import { createBooking } from "@/app/_actions/create-booking";
+import { createBookingCheckoutSession } from "@/app/_actions/create-booking-checkout-session";
 
 export const POST = async (request: Request) => {
   const { messages } = await request.json();
@@ -59,10 +59,12 @@ export const POST = async (request: Request) => {
     - Parâmetros necessários:
       * serviceId: ID do serviço escolhido
       * date: Data e horário no formato ISO (YYYY-MM-DDTHH:mm:ss) - exemplo: "2025-11-05T10:00:00"
-    - Se a criação for bem-sucedida (success: true), informe ao usuário que a reserva foi confirmada com sucesso
-    - Se houver erro (success: false), explique o erro ao usuário:
-      * Se o erro for "User must be logged in", informe que é necessário fazer login para criar uma reserva
+    - IMPORTANTE: O agendamento só será confirmado após o pagamento ser realizado. A ferramenta retornará uma URL de checkout do Stripe.
+    - Se a criação da sessão de checkout for bem-sucedida (success: true e checkoutUrl presente), informe ao usuário que ele precisa realizar o pagamento e forneça a URL do checkout. Diga algo como: "Para finalizar seu agendamento, você precisa realizar o pagamento. Clique no link abaixo para ser redirecionado para a página de pagamento: [URL]"
+    - Se houver erro (success: false ou error presente), explique o erro ao usuário:
+      * Se o erro for "Unauthorized" ou "User must be logged in", informe que é necessário fazer login para criar uma reserva
       * Para outros erros, informe que houve um problema e peça para tentar novamente
+    - Após o pagamento ser concluído, o agendamento será automaticamente confirmado
 
     Importante:
     - NUNCA mostre informações técnicas ao usuário (barbershopId, serviceId, formatos ISO de data, etc.)
@@ -152,7 +154,7 @@ export const POST = async (request: Request) => {
       }),
       createBooking: tool({
         description:
-          "Cria um agendamento para um serviço em uma data específica.",
+          "Cria uma sessão de checkout do Stripe para um agendamento de serviço em uma data específica. O agendamento só será confirmado após o pagamento ser realizado.",
         inputSchema: z.object({
           serviceId: z.string().describe("ID do serviço"),
           date: z
@@ -161,20 +163,28 @@ export const POST = async (request: Request) => {
         }),
         execute: async ({ serviceId, date }) => {
           const parsedDate = new Date(date);
-          const result = await createBooking({
+          const result = await createBookingCheckoutSession({
             serviceId,
             date: parsedDate,
           });
           if (result.serverError || result.validationErrors) {
             return {
+              success: false,
               error:
                 result.validationErrors?._errors?.[0] ||
-                "Erro ao criar agendamento",
+                "Erro ao criar sessão de checkout",
+            };
+          }
+          if (result.data?.url) {
+            return {
+              success: true,
+              checkoutUrl: result.data.url,
+              message: "Sessão de checkout criada com sucesso. O usuário precisa realizar o pagamento para confirmar o agendamento.",
             };
           }
           return {
-            success: true,
-            message: "Agendamento criado com sucesso",
+            success: false,
+            error: "Erro ao obter URL de checkout",
           };
         },
       }),

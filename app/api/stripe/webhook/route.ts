@@ -46,6 +46,25 @@ export const POST = async (request: Request) => {
         ? paymentIntent.latest_charge
         : paymentIntent?.latest_charge?.id;
 
+    // Verificar se já existe agendamento para essa data (não cancelado)
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        barbershopId,
+        date,
+        cancelled: {
+          not: true,
+        },
+      },
+    });
+
+    if (existingBooking) {
+      console.error("Já existe um agendamento para essa data.");
+      // Se já existe, não criar o agendamento mas retornar sucesso para não reprocessar o webhook
+      // O pagamento já foi processado, então seria necessário processar um reembolso
+      // Por enquanto, apenas logamos o erro
+      return NextResponse.json({ received: true, error: "Booking already exists" });
+    }
+
     await prisma.booking.create({
       data: {
         barbershopId,
