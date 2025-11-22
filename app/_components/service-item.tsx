@@ -157,7 +157,7 @@ export function ServiceItem({ service }: ServiceItemProps) {
         </div>
       </div>
 
-      <SheetContent className="w-[370px] overflow-y-auto p-0">
+      <SheetContent className="w-[370px] overflow-y-auto p-0 min-h-[550px]">
         <div className="flex h-full flex-col gap-6">
           <SheetHeader className="px-5 pt-6">
             <SheetTitle className="text-lg font-bold">Fazer Reserva</SheetTitle>
@@ -178,13 +178,13 @@ export function ServiceItem({ service }: ServiceItemProps) {
             <>
               <Separator />
 
-              <div className="flex gap-3 overflow-x-auto px-5 [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-3 overflow-x-auto px-2 py-1 [&::-webkit-scrollbar]:hidden shrink-0">
                 {availableTimeSlots?.data?.map((time) => (
                   <Button
                     key={time}
                     variant={selectedTime === time ? "default" : "outline"}
                     // Adicionado 'flex items-center justify-center' para garantir que o texto esteja perfeitamente centralizado e não cause overflow sutil.
-                    className="shrink-0 rounded-full px-4 py-2 flex items-center justify-center"
+                    className="shrink-0 rounded-full px-4 py- flex items-center justify-center "
                     onClick={() => setSelectedTime(time)}
                   >
                     {time}
