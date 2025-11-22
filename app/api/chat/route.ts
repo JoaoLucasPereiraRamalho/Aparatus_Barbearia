@@ -162,7 +162,9 @@ export const POST = async (request: Request) => {
             .describe("Data em ISO String para a qual deseja agendar"),
         }),
         execute: async ({ serviceId, date }) => {
-          const parsedDate = new Date(date);
+          const dateWithTimezone = date.endsWith("Z") ? date : date + "-03:00";
+          const parsedDate = new Date(dateWithTimezone);
+
           const result = await createBookingCheckoutSession({
             serviceId,
             date: parsedDate,
@@ -179,7 +181,8 @@ export const POST = async (request: Request) => {
             return {
               success: true,
               checkoutUrl: result.data.url,
-              message: "Sessão de checkout criada com sucesso. O usuário precisa realizar o pagamento para confirmar o agendamento.",
+              message:
+                "Sessão de checkout criada com sucesso. O usuário precisa realizar o pagamento para confirmar o agendamento.",
             };
           }
           return {
